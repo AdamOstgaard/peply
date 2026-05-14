@@ -6,6 +6,9 @@
 /* Height of the fixed bottom nav, so screens can reserve matching space. */
 :root {
   --nav-height: calc(64px + env(safe-area-inset-bottom) + var(--space-2));
+  --fab-size: 64px;
+  --fab-bottom: calc(var(--nav-height) + var(--space-6));
+  --fab-clearance: calc(var(--fab-bottom) + var(--fab-size) + var(--space-6));
 }
 
 .app-main {

@@ -2,7 +2,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(var(--nav-height) + var(--space-6));
+  padding-bottom: var(--fab-clearance);
+  scroll-padding-bottom: var(--fab-clearance);
 }
 
 .home-header {
@@ -205,11 +206,11 @@
 
 .fab {
   position: fixed;
-  bottom: calc(96px + env(safe-area-inset-bottom));
+  bottom: var(--fab-bottom);
   left: 50%;
   transform: translateX(-50%);
-  width: 64px;
-  height: 64px;
+  width: var(--fab-size);
+  height: var(--fab-size);
   border-radius: var(--radius-full);
   background: var(--gradient-primary);
   display: grid;
