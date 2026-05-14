@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowUUpLeft } from '@phosphor-icons/react'
+import { ArrowUUpLeft, Plus, Trash, Check } from '@phosphor-icons/react'
 import { Button } from '../components/Button.jsx'
 import { ProgressRing } from '../components/ProgressRing.jsx'
 import { MomentumBar } from '../components/MomentumMeter.jsx'
@@ -21,7 +21,7 @@ export function GoalDetail() {
 
   const {
     state: { goals, logs, rewards },
-    actions: { removeLog, pushToast, archiveGoal, logProgress },
+    actions: { removeLog, pushToast, archiveGoal, logProgress, addMilestone, toggleMilestone, deleteMilestone },
   } = useStore()
 
   const goal = goals.find((g) => g.id === id)
@@ -188,6 +188,13 @@ export function GoalDetail() {
         </section>
       )}
 
+      <MilestonesSection
+        goal={goal}
+        onAdd={(label) => addMilestone(goal.id, label)}
+        onToggle={(milestoneId) => toggleMilestone(goal.id, milestoneId)}
+        onDelete={(milestoneId) => deleteMilestone(goal.id, milestoneId)}
+      />
+
       {goalLogs.length > 0 && (
         <section className="goal-detail__section">
           <div className="t-label muted">Recent activity</div>
@@ -232,5 +239,100 @@ export function GoalDetail() {
         </button>
       </section>
     </div>
+  )
+}
+
+function MilestonesSection({ goal, onAdd, onToggle, onDelete }) {
+  const [newLabel, setNewLabel] = useState('')
+  const [adding, setAdding] = useState(false)
+  const milestones = goal.milestones || []
+  const completed = milestones.filter((m) => m.completedAt).length
+
+  const handleAdd = () => {
+    const label = newLabel.trim()
+    if (!label) return
+    onAdd(label)
+    setNewLabel('')
+    setAdding(false)
+  }
+
+  const handleCancel = () => {
+    setAdding(false)
+    setNewLabel('')
+  }
+
+  return (
+    <section className="goal-detail__section">
+      <div className="milestones__header">
+        <div className="t-label muted">
+          Milestones{milestones.length > 0 ? ` · ${completed}/${milestones.length}` : ''}
+        </div>
+        {!adding && (
+          <button
+            type="button"
+            className="milestones__add-btn"
+            onClick={() => setAdding(true)}
+            aria-label="Add milestone"
+          >
+            <Plus size={14} weight="bold" /> Add
+          </button>
+        )}
+      </div>
+
+      {milestones.length > 0 && (
+        <ul className="milestones__list">
+          {milestones.map((m) => (
+            <li key={m.id} className={`milestones__item ${m.completedAt ? 'milestones__item--done' : ''}`}>
+              <button
+                type="button"
+                className="milestones__check"
+                onClick={() => onToggle(m.id)}
+                aria-label={m.completedAt ? `Uncheck ${m.label}` : `Check ${m.label}`}
+              >
+                {m.completedAt && <Check size={13} weight="bold" />}
+              </button>
+              <span className="milestones__label t-body-sm">{m.label}</span>
+              <button
+                type="button"
+                className="milestones__delete"
+                onClick={() => onDelete(m.id)}
+                aria-label={`Delete ${m.label}`}
+              >
+                <Trash size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {adding && (
+        <div className="milestones__form">
+          <input
+            className="milestones__input"
+            autoFocus
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Milestone description…"
+            maxLength={80}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAdd()
+              if (e.key === 'Escape') handleCancel()
+            }}
+          />
+          <div className="milestones__form-actions">
+            <button type="button" className="milestones__save" onClick={handleAdd} disabled={!newLabel.trim()}>
+              Save
+            </button>
+            <button type="button" className="milestones__cancel" onClick={handleCancel}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {milestones.length === 0 && !adding && (
+        <p className="t-body-sm muted">Break this goal into smaller steps.</p>
+      )}
+    </section>
   )
 }

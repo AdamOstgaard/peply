@@ -110,6 +110,54 @@ function reducer(state, action) {
         logs: state.logs.filter((l) => l.goalId !== action.id),
       }
 
+    case 'add_milestone':
+      return {
+        ...state,
+        goals: state.goals.map((g) =>
+          g.id === action.goalId
+            ? {
+                ...g,
+                milestones: [
+                  ...(g.milestones || []),
+                  { id: uid('m'), label: action.label, completedAt: null },
+                ],
+              }
+            : g,
+        ),
+      }
+
+    case 'toggle_milestone':
+      return {
+        ...state,
+        goals: state.goals.map((g) =>
+          g.id === action.goalId
+            ? {
+                ...g,
+                milestones: (g.milestones || []).map((m) =>
+                  m.id === action.milestoneId
+                    ? { ...m, completedAt: m.completedAt ? null : nowISO() }
+                    : m,
+                ),
+              }
+            : g,
+        ),
+      }
+
+    case 'delete_milestone':
+      return {
+        ...state,
+        goals: state.goals.map((g) =>
+          g.id === action.goalId
+            ? {
+                ...g,
+                milestones: (g.milestones || []).filter(
+                  (m) => m.id !== action.milestoneId,
+                ),
+              }
+            : g,
+        ),
+      }
+
     case 'add_reward': {
       const reward = {
         id: uid('r'),
@@ -274,6 +322,12 @@ export function StoreProvider({ children }) {
       updateGoal: (id, patch) => dispatch({ type: 'update_goal', id, patch }),
       archiveGoal: (id) => dispatch({ type: 'archive_goal', id }),
       deleteGoal: (id) => dispatch({ type: 'delete_goal', id }),
+      addMilestone: (goalId, label) =>
+        dispatch({ type: 'add_milestone', goalId, label }),
+      toggleMilestone: (goalId, milestoneId) =>
+        dispatch({ type: 'toggle_milestone', goalId, milestoneId }),
+      deleteMilestone: (goalId, milestoneId) =>
+        dispatch({ type: 'delete_milestone', goalId, milestoneId }),
       addReward: (reward) => {
         const r = { ...reward, id: uid('r'), createdAt: nowISO() }
         dispatch({ type: 'add_reward', reward: r })

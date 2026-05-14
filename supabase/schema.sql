@@ -37,6 +37,9 @@ create table if not exists public.goals (
   deadline date,
   reward_id uuid references public.rewards(id) on delete set null,
   motivation text,
+  -- Sub-milestones: JSON array of { id, label, completedAt } objects stored
+  -- locally in the client. Add a milestones jsonb column to persist server-side.
+  -- milestones jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   completed_at timestamptz,
   archived_at timestamptz
