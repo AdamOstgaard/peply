@@ -1,110 +1,68 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { BottomNav } from './components/BottomNav.jsx'
+import { ToastHost } from './components/Toast.jsx'
+import { CelebrationOverlay } from './components/CelebrationOverlay.jsx'
+import { Home } from './screens/Home.jsx'
+import { GoalBuilder } from './screens/GoalBuilder.jsx'
+import { GoalDetail } from './screens/GoalDetail.jsx'
+import { GoalsList } from './screens/GoalsList.jsx'
+import { RewardVault } from './screens/RewardVault.jsx'
+import { RewardCreate } from './screens/RewardCreate.jsx'
+import { Profile } from './screens/Profile.jsx'
+import { Auth } from './screens/Auth.jsx'
 import './App.css'
-import { isSupabaseConfigured, supabase } from './lib/supabase'
 
-function App() {
-  const [instruments, setInstruments] = useState([])
-  const [status, setStatus] = useState(
-    isSupabaseConfigured ? 'Connecting to Supabase' : 'Waiting for env vars',
-  )
-  const [error, setError] = useState('')
-
-  const loadInstruments = useCallback(async () => {
-    if (!supabase) return
-
-    setStatus('Loading instruments')
-    setError('')
-
-    const { data, error } = await supabase
-      .from('instruments')
-      .select('id, name')
-      .order('id', { ascending: true })
-
-    if (error) {
-      setStatus('Supabase is configured')
-      setError(error.message)
-      return
-    }
-
-    setInstruments(data ?? [])
-    setStatus('Supabase connected')
-  }, [])
-
-  useEffect(() => {
-    const refresh = window.setTimeout(loadInstruments, 0)
-
-    return () => window.clearTimeout(refresh)
-  }, [loadInstruments])
-
-  return (
-    <main>
-      <section className="intro" aria-labelledby="page-title">
-        <p className="eyebrow">React + Vercel + Supabase</p>
-        <h1 id="page-title">Hello world from Peply</h1>
-        <p className="lede">
-          A tiny Vite React app wired for Supabase data and ready to deploy on
-          Vercel.
-        </p>
-      </section>
-
-      <section className="workspace" aria-label="Project status">
-        <article className="panel">
-          <div className="panel-header">
-            <h2>Supabase</h2>
-            <span className="status">{status}</span>
-          </div>
-
-          {!isSupabaseConfigured && (
-            <div className="notice">
-              Add your project URL and publishable key to{' '}
-              <code>.env.local</code> using <code>.env.example</code> as the
-              template.
-            </div>
-          )}
-
-          {error && (
-            <div className="notice warning">
-              {error}. Run <code>supabase/instruments.sql</code> in your
-              Supabase SQL editor to create the sample table.
-            </div>
-          )}
-
-          <ul className="instrument-list">
-            {instruments.length > 0 ? (
-              instruments.map((instrument) => (
-                <li key={instrument.id}>{instrument.name}</li>
-              ))
-            ) : (
-              <li className="empty">Sample instruments will appear here.</li>
-            )}
-          </ul>
-
-          <button
-            type="button"
-            onClick={loadInstruments}
-            disabled={!isSupabaseConfigured}
-          >
-            Refresh data
-          </button>
-        </article>
-
-        <article className="panel">
-          <div className="panel-header">
-            <h2>Vercel</h2>
-            <span className="status">Configured</span>
-          </div>
-          <p>
-            SPA rewrites live in <code>vercel.json</code>. Set the same
-            Supabase env vars in Vercel before deploying.
-          </p>
-          <div className="commands" aria-label="Deployment commands">
-            <code>npm run build</code>
-            <code>npm run deploy</code>
-          </div>
-        </article>
-      </section>
-    </main>
-  )
+const enter = { x: '100%', opacity: 0 }
+const center = {
+  x: 0,
+  opacity: 1,
+  transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
+}
+const exit = {
+  x: '-30%',
+  opacity: 0,
+  transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
 }
 
-export default App
+const fadeEnter = { opacity: 0 }
+const fadeCenter = { opacity: 1, transition: { duration: 0.18 } }
+const fadeExit = { opacity: 0, transition: { duration: 0.15 } }
+
+export default function App() {
+  const location = useLocation()
+  const reduce = useReducedMotion()
+
+  const motionPreset = reduce
+    ? { initial: fadeEnter, animate: fadeCenter, exit: fadeExit }
+    : { initial: enter, animate: center, exit }
+
+  return (
+    <div className="app-shell">
+      <ToastHost />
+      <CelebrationOverlay />
+      <main className="app-main">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            className="route-frame"
+            {...motionPreset}
+          >
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/goals" element={<GoalsList />} />
+              <Route path="/goal/new" element={<GoalBuilder />} />
+              <Route path="/goal/:id" element={<GoalDetail />} />
+              <Route path="/rewards" element={<RewardVault />} />
+              <Route path="/reward/new" element={<RewardCreate />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <BottomNav />
+    </div>
+  )
+}

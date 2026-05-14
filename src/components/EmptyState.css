@@ -1,0 +1,16 @@
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-6);
+}
+
+.empty-state__art {
+  margin-bottom: var(--space-2);
+}
+
+.empty-state p {
+  max-width: 280px;
+}

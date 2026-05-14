@@ -11,5 +11,23 @@ export const isSupabaseConfigured = Boolean(
 )
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabasePublishableKey)
+  ? createClient(supabaseUrl, supabasePublishableKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
   : null
+
+export function displayNameFromUser(user) {
+  if (!user) return null
+  const meta = user.user_metadata || {}
+  return (
+    meta.display_name ||
+    meta.full_name ||
+    meta.name ||
+    user.email?.split('@')[0] ||
+    null
+  )
+}

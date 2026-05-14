@@ -1,0 +1,90 @@
+.reward-create {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+.reward-create__dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: var(--space-2) var(--space-5) var(--space-3);
+}
+
+.reward-create__stage {
+  flex: 1;
+  padding: var(--space-4) var(--space-5) calc(env(safe-area-inset-bottom) + var(--space-6));
+  display: flex;
+  flex-direction: column;
+}
+
+.reward-create__step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.tier-card {
+  padding: var(--space-6) var(--space-4);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  transition: all var(--duration-fast) var(--ease-spring);
+  color: var(--color-text-primary);
+}
+
+.tier-card--active {
+  border-color: transparent;
+  transform: scale(1.04);
+  box-shadow: var(--shadow-raised);
+}
+
+.tier-card--small {
+  background: linear-gradient(135deg, rgba(0, 201, 167, 0.12), rgba(63, 193, 201, 0.08));
+}
+.tier-card--medium {
+  background: linear-gradient(135deg, rgba(255, 179, 71, 0.15), rgba(255, 107, 107, 0.08));
+}
+.tier-card--big {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.18), rgba(132, 94, 194, 0.12));
+}
+.tier-card--dream {
+  background: linear-gradient(135deg, rgba(249, 248, 113, 0.25), rgba(255, 107, 107, 0.15));
+}
+
+.tier-card--active.tier-card--small {
+  background: var(--gradient-cool);
+  color: var(--color-text-inverse);
+}
+.tier-card--active.tier-card--medium {
+  background: var(--gradient-warm);
+  color: var(--color-text-inverse);
+}
+.tier-card--active.tier-card--big {
+  background: var(--gradient-primary);
+  color: var(--color-text-inverse);
+}
+.tier-card--active.tier-card--dream {
+  background: var(--gradient-celebration);
+  color: #1A1625;
+}
+
+.cost-label {
+  display: block;
+  margin-top: var(--space-2);
+}
+
+.reward-create__preview {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-3) 0;
+}

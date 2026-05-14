@@ -12,9 +12,13 @@
     "deploy:prod": "npx --yes vercel --prod"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/supabase-js": "^2.105.4",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^12.38.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.15.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
