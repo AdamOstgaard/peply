@@ -66,7 +66,7 @@ export function Auth() {
 
   return (
     <div className="auth">
-      <ScreenHeader title="" />
+      <ScreenHeader title="" fallback={returnTo} />
 
       <div className="auth__hero">
         <motion.div

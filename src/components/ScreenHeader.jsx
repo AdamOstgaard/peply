@@ -2,11 +2,24 @@ import { useNavigate } from 'react-router-dom'
 import { CaretLeft } from '@phosphor-icons/react'
 import './ScreenHeader.css'
 
-export function ScreenHeader({ title, subtitle, onBack, right, transparent = false }) {
+function canNavigateBack() {
+  if (typeof window === 'undefined') return false
+  return (window.history.state?.idx ?? 0) > 0
+}
+
+export function ScreenHeader({
+  title,
+  subtitle,
+  onBack,
+  right,
+  transparent = false,
+  fallback = '/',
+}) {
   const navigate = useNavigate()
   const handleBack = () => {
     if (onBack) return onBack()
-    navigate(-1)
+    if (canNavigateBack()) navigate(-1)
+    else navigate(fallback, { replace: true })
   }
   return (
     <header className={`screen-header ${transparent ? 'screen-header--transparent' : ''}`}>

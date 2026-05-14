@@ -34,7 +34,7 @@ export function GoalDetail() {
   if (!goal) {
     return (
       <div className="goal-detail">
-        <ScreenHeader title="Goal" />
+        <ScreenHeader title="Goal" fallback="/goals" />
         <div className="goal-detail__missing">
           <p className="t-body">This goal isn't here anymore.</p>
           <Button onClick={() => navigate('/')}>Back home</Button>
@@ -75,7 +75,7 @@ export function GoalDetail() {
 
   return (
     <div className="goal-detail">
-      <ScreenHeader transparent />
+      <ScreenHeader transparent fallback="/goals" />
 
       <div className="goal-detail__hero" style={{ '--type-grad': type.gradient }}>
         <div className="goal-detail__hero-art" aria-hidden />

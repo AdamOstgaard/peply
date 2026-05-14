@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Minus, Plus, Check } from '@phosphor-icons/react'
 import { Button } from '../components/Button.jsx'
 import { ScreenHeader } from '../components/ScreenHeader.jsx'
@@ -36,8 +36,14 @@ function freshDraft() {
   }
 }
 
+function canNavigateBack() {
+  if (typeof window === 'undefined') return false
+  return (window.history.state?.idx ?? 0) > 0
+}
+
 export function GoalBuilder() {
   const navigate = useNavigate()
+  const location = useLocation()
   const reduce = useReducedMotion()
   const {
     state: { rewards, goals, goalDraft },
@@ -49,10 +55,20 @@ export function GoalBuilder() {
       updateReward,
     },
   } = useStore()
+  const prefillRewardId = location.state?.prefillRewardId
+  const canPrefillReward = rewards.some((r) => r.id === prefillRewardId)
 
   // Hydrate from the persisted draft on first mount (covers the round-trip
   // through reward creation). If none, seed a fresh one and persist it.
-  const [initial] = useState(() => goalDraft ?? freshDraft())
+  const [initial] = useState(() => {
+    if (goalDraft) return goalDraft
+    const draft = freshDraft()
+    if (!canPrefillReward) return draft
+    return {
+      ...draft,
+      data: { ...draft.data, rewardId: prefillRewardId },
+    }
+  })
   const [step, setStep] = useState(initial.step)
   const [direction, setDirection] = useState(1)
   const [data, setData] = useState(initial.data)
@@ -76,7 +92,8 @@ export function GoalBuilder() {
   const goBack = () => {
     if (step === 0) {
       clearGoalDraft()
-      return navigate(-1)
+      if (canNavigateBack()) return navigate(-1)
+      return navigate('/goals', { replace: true })
     }
     setDirection(-1)
     setStep((s) => Math.max(0, s - 1))
@@ -245,6 +262,7 @@ function StepType({ data, update }) {
 
 function StepTarget({ data, update, onNext }) {
   const type = getGoalType(data.type)
+  const valid = type.id !== 'habit' || (data.schedule?.length || 0) > 0
   return (
     <>
       <h2 className="builder__q t-headline">
@@ -265,7 +283,7 @@ function StepTarget({ data, update, onNext }) {
       {type.id === 'milestone' && <MilestoneTarget data={data} update={update} />}
 
       <div className="builder__cta">
-        <Button block onClick={onNext}>
+        <Button block onClick={onNext} disabled={!valid}>
           Looking good →
         </Button>
       </div>

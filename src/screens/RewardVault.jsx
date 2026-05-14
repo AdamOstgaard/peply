@@ -15,6 +15,7 @@ export function RewardVault() {
   const navigate = useNavigate()
   const {
     state: { rewards, goals, logs },
+    actions: { claimReward, pushToast },
   } = useStore()
 
   const rewardWithProgress = useMemo(() => {
@@ -48,6 +49,24 @@ export function RewardVault() {
     return (TIER_RANK[b.reward.tier] || 0) - (TIER_RANK[a.reward.tier] || 0)
   })
 
+  const handleRewardAction = ({ reward, status, linkedGoals }) => {
+    if (status === 'unlocked') {
+      claimReward(reward.id)
+      pushToast({ message: `${reward.name} claimed. Enjoy it.`, variant: 'success' })
+      return
+    }
+
+    const nextGoal =
+      linkedGoals.find((g) => !g.archivedAt && !g.completedAt) || linkedGoals[0]
+
+    if (nextGoal) {
+      navigate(`/goal/${nextGoal.id}`)
+      return
+    }
+
+    navigate('/goal/new', { state: { prefillRewardId: reward.id } })
+  }
+
   if (rewards.length === 0) {
     return (
       <div className="vault">
@@ -79,7 +98,14 @@ export function RewardVault() {
                 key={reward.id}
                 reward={reward}
                 progress={progress}
-                onClick={() => {}}
+                onClick={() =>
+                  handleRewardAction({
+                    reward,
+                    progress,
+                    status: reward.unlockedAt ? 'unlocked' : 'in-progress',
+                    linkedGoals: goalsLinkedTo(reward.id, goals),
+                  })
+                }
               />
             ))}
           </div>
@@ -100,7 +126,14 @@ export function RewardVault() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.04 * i, duration: 0.25 }}
               >
-                <button className="vault-row" type="button">
+                <button
+                  className="vault-row"
+                  type="button"
+                  onClick={() =>
+                    handleRewardAction({ reward, status, linkedGoals })
+                  }
+                  aria-label={rewardActionLabel({ reward, status, linkedGoals })}
+                >
                   <span className="vault-row__emoji">
                     {reward.emoji || '🎁'}
                   </span>
@@ -152,6 +185,12 @@ export function RewardVault() {
       </button>
     </div>
   )
+}
+
+function rewardActionLabel({ reward, status, linkedGoals }) {
+  if (status === 'unlocked') return `Claim ${reward.name}`
+  if (linkedGoals.length > 0) return `Open goal for ${reward.name}`
+  return `Create a goal for ${reward.name}`
 }
 
 function Heading({ title, subtitle }) {

@@ -64,7 +64,12 @@ export function Profile() {
               maxLength={32}
               onKeyDown={(e) => e.key === 'Enter' && save()}
             />
-            <button type="button" className="profile__save" onClick={save}>
+            <button
+              type="button"
+              className="profile__save"
+              onClick={save}
+              aria-label="Save name"
+            >
               <Check size={20} weight="bold" />
             </button>
           </div>

@@ -58,9 +58,17 @@ export function RewardCreate() {
     }
   }
 
+  const handleBack = () => {
+    if (step > 0) {
+      setStep((s) => s - 1)
+      return
+    }
+    navigate(returnTo || '/rewards', { replace: true })
+  }
+
   return (
     <div className="reward-create">
-      <ScreenHeader title="New reward" />
+      <ScreenHeader title="New reward" onBack={handleBack} />
       <div className="reward-create__dots" aria-hidden>
         {[0, 1, 2].map((i) => (
           <span
@@ -102,11 +110,18 @@ export function RewardCreate() {
                   rows={3}
                   placeholder="Optional note — why this reward means something."
                 />
-                <div className="builder__emoji-row">
+                <div
+                  className="builder__emoji-row"
+                  role="radiogroup"
+                  aria-label="Reward emoji"
+                >
                   {EMOJI_POOL.map((e) => (
                     <button
                       key={e}
                       type="button"
+                      role="radio"
+                      aria-checked={data.emoji === e}
+                      aria-label={e}
                       className={`builder__emoji ${
                         data.emoji === e ? 'builder__emoji--active' : ''
                       }`}
@@ -135,6 +150,7 @@ export function RewardCreate() {
                       key={t.id}
                       type="button"
                       onClick={() => update({ tier: t.id })}
+                      aria-pressed={data.tier === t.id}
                       className={`tier-card tier-card--${t.id} ${
                         data.tier === t.id ? 'tier-card--active' : ''
                       }`}

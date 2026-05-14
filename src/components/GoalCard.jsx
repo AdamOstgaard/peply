@@ -10,12 +10,14 @@ export function GoalCard({ goal, logs, onLog }) {
   const type = getGoalType(goal.type)
   const progress = goalProgress(goal, logs)
   const isLoggedToday = loggedToday(goal, logs)
+  const isDailyDone = goal.type !== 'count' && isLoggedToday
   const isComplete = progress.ratio >= 1
   const reduce = useReducedMotion()
 
   const handleCardTap = () => navigate(`/goal/${goal.id}`)
   const handleLog = (e) => {
     e.stopPropagation()
+    if (isComplete || isDailyDone) return
     onLog?.(goal)
   }
 
@@ -36,7 +38,7 @@ export function GoalCard({ goal, logs, onLog }) {
       onKeyDown={handleCardKey}
       whileTap={{ scale: reduce ? 1 : 0.985 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className={`goal-card ${isLoggedToday ? 'goal-card--logged' : ''} ${
+      className={`goal-card ${isDailyDone || isComplete ? 'goal-card--logged' : ''} ${
         isComplete ? 'goal-card--complete' : ''
       }`}
       style={{ '--strip': type.color }}
@@ -71,12 +73,17 @@ export function GoalCard({ goal, logs, onLog }) {
         whileTap={{ scale: reduce ? 1 : 0.85 }}
         transition={{ type: 'spring', stiffness: 700, damping: 22 }}
         onClick={handleLog}
+        disabled={isComplete || isDailyDone}
         aria-label={
-          isLoggedToday ? `${goal.name} logged today` : `Log ${goal.name}`
+          isComplete
+            ? `${goal.name} complete`
+            : isDailyDone
+              ? `${goal.name} logged today`
+              : `Log ${goal.name}`
         }
-        style={!isLoggedToday ? { background: type.gradient } : undefined}
+        style={!isDailyDone && !isComplete ? { background: type.gradient } : undefined}
       >
-        {isLoggedToday ? (
+        {isDailyDone || isComplete ? (
           <Check size={22} weight="bold" />
         ) : (
           <Plus size={22} weight="bold" />
