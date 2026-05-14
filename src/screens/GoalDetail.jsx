@@ -256,6 +256,11 @@ function MilestonesSection({ goal, onAdd, onToggle, onDelete }) {
     setAdding(false)
   }
 
+  const handleCancel = () => {
+    setAdding(false)
+    setNewLabel('')
+  }
+
   return (
     <section className="goal-detail__section">
       <div className="milestones__header">
@@ -311,17 +316,14 @@ function MilestonesSection({ goal, onAdd, onToggle, onDelete }) {
             maxLength={80}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleAdd()
-              if (e.key === 'Escape') {
-                setAdding(false)
-                setNewLabel('')
-              }
+              if (e.key === 'Escape') handleCancel()
             }}
           />
           <div className="milestones__form-actions">
             <button type="button" className="milestones__save" onClick={handleAdd} disabled={!newLabel.trim()}>
               Save
             </button>
-            <button type="button" className="milestones__cancel" onClick={() => { setAdding(false); setNewLabel('') }}>
+            <button type="button" className="milestones__cancel" onClick={handleCancel}>
               Cancel
             </button>
           </div>
