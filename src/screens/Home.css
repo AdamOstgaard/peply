@@ -205,8 +205,22 @@
   margin: var(--space-1) 0 0;
 }
 
-.home__wins-label {
+.home__wins-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: var(--space-2);
+}
+
+.home__wins-label {
+  margin-bottom: 0;
+}
+
+.home__wins-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
 .home__wins {

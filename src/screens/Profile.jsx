@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Check, SignOut, SignIn } from '@phosphor-icons/react'
+import { Pencil, Check, SignOut, SignIn, Trophy } from '@phosphor-icons/react'
 import { useStore } from '../lib/store.jsx'
 import { MomentumMeter } from '../components/MomentumMeter.jsx'
 import { Button } from '../components/Button.jsx'
@@ -95,6 +95,24 @@ export function Profile() {
         <Stat number={completedCount} label="Goals completed" />
         <Stat number={unlockedCount} label="Rewards earned" />
         <Stat number={totalLogs} label="Times you showed up" />
+      </section>
+
+      <section className="profile__section">
+        <button
+          type="button"
+          className="brag-card"
+          onClick={() => navigate('/achievements')}
+        >
+          <span className="brag-card__icon" aria-hidden>
+            <Trophy size={24} weight="fill" />
+          </span>
+          <span className="brag-card__body">
+            <span className="t-body-lg">Brag board</span>
+            <span className="t-body-sm muted">
+              Revisit completed goals and earned rewards.
+            </span>
+          </span>
+        </button>
       </section>
 
       <section className="profile__section">

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { House, Target, Gift, User } from '@phosphor-icons/react'
+import { House, Target, Gift, Trophy, User } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './BottomNav.css'
 
@@ -7,6 +7,7 @@ const TABS = [
   { to: '/', label: 'Home', icon: House, end: true },
   { to: '/goals', label: 'Goals', icon: Target },
   { to: '/rewards', label: 'Rewards', icon: Gift },
+  { to: '/achievements', label: 'Wins', icon: Trophy },
   { to: '/profile', label: 'Profile', icon: User },
 ]
 

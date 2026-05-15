@@ -23,8 +23,9 @@ export function RewardCreate() {
   const navigate = useNavigate()
   const location = useLocation()
   const returnTo = location.state?.returnTo
+  const editGoalId = location.state?.editGoalId
   const {
-    actions: { addReward, pushToast, patchGoalDraft },
+    actions: { addReward, pushToast, patchGoalDraft, updateGoal },
   } = useStore()
 
   const [step, setStep] = useState(0)
@@ -48,6 +49,11 @@ export function RewardCreate() {
       cost: data.cost ? Number(data.cost) : null,
     })
     pushToast({ message: 'Reward saved.', variant: 'success' })
+    if (editGoalId) {
+      updateGoal(editGoalId, { rewardId: reward.id })
+      navigate(returnTo || `/goal/${editGoalId}/edit`, { replace: true })
+      return
+    }
     if (returnTo) {
       // Returning into the goal builder — pre-link the reward we just made
       // so the user lands back on the reward step with it already selected.

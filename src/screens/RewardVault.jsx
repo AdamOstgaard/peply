@@ -20,7 +20,6 @@ export function RewardVault() {
   const navigate = useNavigate()
   const {
     state: { rewards, goals, logs },
-    actions: { claimReward, pushToast },
   } = useStore()
 
   const rewardWithProgress = useMemo(() => {
@@ -49,25 +48,7 @@ export function RewardVault() {
     return (TIER_RANK[b.reward.tier] || 0) - (TIER_RANK[a.reward.tier] || 0)
   })
 
-  const handleRewardAction = ({ reward, status, linkedGoals, summary }) => {
-    if (status === 'unlocked') {
-      claimReward(reward.id)
-      pushToast({ message: `${reward.name} claimed. Enjoy it.`, variant: 'success' })
-      return
-    }
-
-    const nextGoal =
-      summary?.focusGoal ||
-      linkedGoals.find((g) => !g.archivedAt && !g.completedAt) ||
-      linkedGoals[0]
-
-    if (nextGoal) {
-      navigate(`/goal/${nextGoal.id}`)
-      return
-    }
-
-    navigate('/goal/new', { state: { prefillRewardId: reward.id } })
-  }
+  const openReward = (rewardId) => navigate(`/rewards/${rewardId}`)
 
   if (rewards.length === 0) {
     return (
@@ -95,20 +76,14 @@ export function RewardVault() {
         <section className="vault__section">
           <div className="t-label muted vault__label">Active</div>
           <div className="vault__row">
-            {active.map(({ reward, progress, status, linkedGoals, summary }) => (
+            {active.map(({ reward, progress, status }) => (
               <RewardCard
                 key={reward.id}
                 reward={reward}
                 progress={progress}
                 status={status}
                 onClick={() =>
-                  handleRewardAction({
-                    reward,
-                    progress,
-                    status,
-                    linkedGoals,
-                    summary,
-                  })
+                  openReward(reward.id)
                 }
               />
             ))}
@@ -134,12 +109,7 @@ export function RewardVault() {
                   className="vault-row"
                   type="button"
                   onClick={() =>
-                    handleRewardAction({
-                      reward,
-                      status,
-                      linkedGoals,
-                      summary,
-                    })
+                    openReward(reward.id)
                   }
                   aria-label={rewardActionLabel({ reward, status, linkedGoals })}
                 >
@@ -197,9 +167,9 @@ export function RewardVault() {
 }
 
 function rewardActionLabel({ reward, status, linkedGoals }) {
-  if (status === 'unlocked') return `Claim ${reward.name}`
-  if (linkedGoals.length > 0) return `Open goal for ${reward.name}`
-  return `Create a goal for ${reward.name}`
+  if (status === 'unlocked') return `View and claim ${reward.name}`
+  if (linkedGoals.length > 0) return `View details for ${reward.name}`
+  return `View and link ${reward.name}`
 }
 
 function rewardProgressText({ reward, progress, summary }) {

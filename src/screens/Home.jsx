@@ -196,7 +196,12 @@ export function Home() {
 
       {completedRecent.length > 0 && (
         <section className="home__section">
-          <div className="t-label muted home__wins-label">Recent wins</div>
+          <div className="home__wins-head">
+            <div className="t-label muted home__wins-label">Recent wins</div>
+            <Link to="/achievements" className="home__wins-link">
+              Brag board
+            </Link>
+          </div>
           <div className="home__wins">
             {completedRecent.map((g) => (
               <div className="win-chip" key={g.id}>

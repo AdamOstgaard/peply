@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowUUpLeft, Plus, Trash, Check } from '@phosphor-icons/react'
+import { ArrowUUpLeft, Plus, Trash, Check, PencilSimple } from '@phosphor-icons/react'
 import { Button } from '../components/Button.jsx'
 import { ProgressRing } from '../components/ProgressRing.jsx'
 import { MomentumBar } from '../components/MomentumMeter.jsx'
@@ -241,6 +241,14 @@ export function GoalDetail() {
       </section>
 
       <section className="goal-detail__section goal-detail__actions">
+        <Button
+          variant="secondary"
+          size="md"
+          leftIcon={<PencilSimple size={18} weight="bold" />}
+          onClick={() => navigate(`/goal/${goal.id}/edit`)}
+        >
+          Edit goal
+        </Button>
         <button
           type="button"
           className="ghost-link"

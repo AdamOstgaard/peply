@@ -167,6 +167,8 @@ function reducer(state, action) {
         unlockedAt: null,
         claimedAt: null,
         unlockCount: 0,
+        unlockHistory: [],
+        claimHistory: [],
         unlockMode: 'each',
         ...action.reward,
       }
@@ -181,13 +183,24 @@ function reducer(state, action) {
         ),
       }
 
-    case 'claim_reward':
+    case 'claim_reward': {
+      const claimedAt = nowISO()
       return {
         ...state,
         rewards: state.rewards.map((r) =>
-          r.id === action.id ? { ...r, claimedAt: nowISO() } : r,
+          r.id === action.id
+            ? {
+                ...r,
+                claimedAt,
+                claimHistory: [
+                  ...(r.claimHistory || []),
+                  { id: uid('c'), at: claimedAt },
+                ],
+              }
+            : r,
         ),
       }
+    }
 
     case 'add_log': {
       const log = {
@@ -446,12 +459,17 @@ export function StoreProvider({ children }) {
         })
 
         if (reward && decision.markUnlocked) {
+          const achievedAt = nowISO()
           dispatch({
             type: 'update_reward',
             id: reward.id,
             patch: {
-              unlockedAt: nowISO(),
+              unlockedAt: achievedAt,
               unlockCount: (reward.unlockCount || 0) + 1,
+              unlockHistory: [
+                ...(reward.unlockHistory || []),
+                { id: uid('u'), goalId: goal.id, at: achievedAt },
+              ],
               ...(decision.resetClaim ? { claimedAt: null } : {}),
             },
           })

@@ -8,9 +8,11 @@ import { GoalBuilder } from './screens/GoalBuilder.jsx'
 import { GoalDetail } from './screens/GoalDetail.jsx'
 import { GoalsList } from './screens/GoalsList.jsx'
 import { RewardVault } from './screens/RewardVault.jsx'
+import { RewardDetail } from './screens/RewardDetail.jsx'
 import { RewardCreate } from './screens/RewardCreate.jsx'
 import { Profile } from './screens/Profile.jsx'
 import { Auth } from './screens/Auth.jsx'
+import { Achievements } from './screens/Achievements.jsx'
 import './App.css'
 
 const enter = { x: '100%', opacity: 0 }
@@ -53,8 +55,11 @@ export default function App() {
               <Route path="/goals" element={<GoalsList />} />
               <Route path="/goal/new" element={<GoalBuilder />} />
               <Route path="/goal/:id" element={<GoalDetail />} />
+              <Route path="/goal/:id/edit" element={<GoalBuilder />} />
               <Route path="/rewards" element={<RewardVault />} />
+              <Route path="/rewards/:id" element={<RewardDetail />} />
               <Route path="/reward/new" element={<RewardCreate />} />
+              <Route path="/achievements" element={<Achievements />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="*" element={<Home />} />

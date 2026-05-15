@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Minus, Plus, Check } from '@phosphor-icons/react'
 import { Button } from '../components/Button.jsx'
 import { ScreenHeader } from '../components/ScreenHeader.jsx'
@@ -36,6 +36,37 @@ function freshDraft() {
   }
 }
 
+function draftFromGoal(goal) {
+  return {
+    data: {
+      name: goal.name || '',
+      emoji: goal.emoji || EMOJI_POOL[0],
+      type: goal.type || 'habit',
+      target: goal.target || 7,
+      unit: goal.unit || '',
+      schedule: goal.schedule || ['mon', 'wed', 'fri'],
+      rewardId: goal.rewardId || null,
+      motivation: goal.motivation || '',
+      deadline: goal.deadline || null,
+    },
+    step: 0,
+  }
+}
+
+function goalPayload(data) {
+  return {
+    name: data.name.trim(),
+    emoji: data.emoji,
+    type: data.type,
+    target: data.target,
+    unit: data.unit,
+    schedule: data.schedule,
+    rewardId: data.rewardId,
+    motivation: data.motivation.trim(),
+    deadline: data.type === 'milestone' ? data.deadline || null : null,
+  }
+}
+
 function canNavigateBack() {
   if (typeof window === 'undefined') return false
   return (window.history.state?.idx ?? 0) > 0
@@ -44,23 +75,28 @@ function canNavigateBack() {
 export function GoalBuilder() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { id: editGoalId } = useParams()
   const reduce = useReducedMotion()
   const {
     state: { rewards, goals, goalDraft },
     actions: {
       addGoal,
+      updateGoal,
       pushToast,
       setGoalDraft,
       clearGoalDraft,
       updateReward,
     },
   } = useStore()
+  const isEditing = Boolean(editGoalId)
+  const editingGoal = editGoalId ? goals.find((g) => g.id === editGoalId) : null
   const prefillRewardId = location.state?.prefillRewardId
   const canPrefillReward = rewards.some((r) => r.id === prefillRewardId)
 
   // Hydrate from the persisted draft on first mount (covers the round-trip
   // through reward creation). If none, seed a fresh one and persist it.
   const [initial] = useState(() => {
+    if (isEditing && editingGoal) return draftFromGoal(editingGoal)
     if (goalDraft) return goalDraft
     const draft = freshDraft()
     if (!canPrefillReward) return draft
@@ -75,13 +111,13 @@ export function GoalBuilder() {
 
   useEffect(() => {
     // Seed the store so a side-trip can hydrate on return.
-    if (!goalDraft) setGoalDraft(initial)
+    if (!isEditing && !goalDraft) setGoalDraft(initial)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    setGoalDraft({ data, step })
-  }, [data, step, setGoalDraft])
+    if (!isEditing) setGoalDraft({ data, step })
+  }, [data, isEditing, step, setGoalDraft])
 
   const update = (patch) => setData((d) => ({ ...d, ...patch }))
 
@@ -91,7 +127,11 @@ export function GoalBuilder() {
   }
   const goBack = () => {
     if (step === 0) {
-      clearGoalDraft()
+      if (!isEditing) clearGoalDraft()
+      if (isEditing && editingGoal) {
+        navigate(`/goal/${editingGoal.id}`, { replace: true })
+        return
+      }
       if (canNavigateBack()) return navigate(-1)
       return navigate('/goals', { replace: true })
     }
@@ -100,24 +140,35 @@ export function GoalBuilder() {
   }
 
   const handleSubmit = () => {
-    const goal = addGoal({
-      name: data.name.trim(),
-      emoji: data.emoji,
-      type: data.type,
-      target: data.target,
-      unit: data.unit,
-      schedule: data.schedule,
-      rewardId: data.rewardId,
-      motivation: data.motivation.trim(),
-    })
+    const payload = goalPayload(data)
+    if (isEditing && editingGoal) {
+      updateGoal(editingGoal.id, payload)
+      pushToast({ message: 'Goal updated.', variant: 'success' })
+      navigate(`/goal/${editingGoal.id}`, { replace: true })
+      return
+    }
+
+    const goal = addGoal(payload)
     clearGoalDraft()
     pushToast({ message: "Goal saved. Let's go.", variant: 'info' })
     navigate(`/goal/${goal.id}`, { replace: true })
   }
 
+  if (isEditing && !editingGoal) {
+    return (
+      <div className="builder">
+        <ScreenHeader title="Edit goal" fallback="/goals" />
+        <div className="builder__missing">
+          <p className="t-body">This goal isn't here anymore.</p>
+          <Button onClick={() => navigate('/goals')}>Back to goals</Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="builder">
-      <ScreenHeader onBack={goBack} title="" />
+      <ScreenHeader onBack={goBack} title={isEditing ? 'Edit goal' : ''} />
       <div className="builder__dots" aria-hidden>
         {STEPS.map((s, i) => (
           <span
@@ -167,7 +218,12 @@ export function GoalBuilder() {
                 onNext={goNext}
                 onCreate={() =>
                   navigate('/reward/new', {
-                    state: { returnTo: '/goal/new' },
+                    state: {
+                      returnTo: isEditing
+                        ? `/goal/${editingGoal.id}/edit`
+                        : '/goal/new',
+                      editGoalId: isEditing ? editingGoal.id : null,
+                    },
                   })
                 }
               />
@@ -176,7 +232,11 @@ export function GoalBuilder() {
               <StepWhy data={data} update={update} onNext={goNext} />
             )}
             {step === 5 && (
-              <StepConfirm data={data} onSubmit={handleSubmit} />
+              <StepConfirm
+                data={data}
+                isEditing={isEditing}
+                onSubmit={handleSubmit}
+              />
             )}
           </motion.div>
         </AnimatePresence>
@@ -520,7 +580,7 @@ function StepWhy({ data, update, onNext }) {
   )
 }
 
-function StepConfirm({ data, onSubmit }) {
+function StepConfirm({ data, isEditing, onSubmit }) {
   const type = getGoalType(data.type)
   const targetText = useMemo(() => {
     if (type.id === 'count') return `${data.target}${data.unit ? ` ${data.unit}` : ''}`
@@ -547,7 +607,7 @@ function StepConfirm({ data, onSubmit }) {
       </div>
       <div className="builder__cta">
         <Button block onClick={onSubmit}>
-          Start this goal ✓
+          {isEditing ? 'Save changes ✓' : 'Start this goal ✓'}
         </Button>
       </div>
     </>
