@@ -43,6 +43,18 @@
   );
 }
 
+.goal-card--paused {
+  background: linear-gradient(
+    90deg,
+    rgba(107, 101, 128, 0.06) 0%,
+    var(--color-surface) 60%
+  );
+}
+
+.goal-card--paused .goal-card__strip {
+  background: var(--color-border);
+}
+
 .goal-card__icon {
   width: 48px;
   height: 48px;
@@ -103,4 +115,10 @@
 .goal-card__log--done {
   background: var(--gradient-cool);
   box-shadow: 0 6px 16px rgba(0, 201, 167, 0.32);
+}
+
+.goal-card__log--paused {
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  box-shadow: none;
 }

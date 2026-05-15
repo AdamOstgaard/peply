@@ -23,10 +23,11 @@ export function RewardCard({
   size = 'lg',
   onClick,
   highlight = false,
+  status,
 }) {
   const reduce = useReducedMotion()
-  const unlocked = Boolean(reward.unlockedAt)
-  const claimed = Boolean(reward.claimedAt)
+  const unlocked = status ? status === 'unlocked' : Boolean(reward.unlockedAt)
+  const claimed = status ? status === 'claimed' : Boolean(reward.claimedAt)
   const aspirational = progress >= 0.7 || highlight
 
   return (

@@ -179,6 +179,32 @@
   padding: 0;
 }
 
+.rest-day-card {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.rest-day-card__emoji {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  font-size: 28px;
+}
+
+.rest-day-card p {
+  margin: var(--space-1) 0 0;
+}
+
 .home__wins-label {
   margin-bottom: var(--space-2);
 }

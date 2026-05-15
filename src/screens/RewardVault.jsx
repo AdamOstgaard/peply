@@ -6,7 +6,12 @@ import { RewardCard } from '../components/RewardCard.jsx'
 import { EmptyState, GiftIllustration } from '../components/EmptyState.jsx'
 import { Button } from '../components/Button.jsx'
 import { useStore } from '../lib/store.jsx'
-import { getUnlockMode, goalProgress, goalsLinkedTo } from '../lib/domain.js'
+import {
+  getUnlockMode,
+  goalsLinkedTo,
+  rewardProgressSummary,
+  rewardStatus,
+} from '../lib/domain.js'
 import './RewardVault.css'
 
 const TIER_RANK = { dream: 4, big: 3, medium: 2, small: 1 }
@@ -21,20 +26,15 @@ export function RewardVault() {
   const rewardWithProgress = useMemo(() => {
     return rewards.map((r) => {
       const linkedGoals = goalsLinkedTo(r.id, goals)
-      // Aggregate progress: average ratio across all linked goals so users with
-      // multiple linked goals see a meaningful "almost there" feeling.
-      const progress = linkedGoals.length
-        ? linkedGoals.reduce((a, g) => a + goalProgress(g, logs).ratio, 0) /
-          linkedGoals.length
-        : 0
-      const status = r.claimedAt
-        ? 'claimed'
-        : r.unlockedAt
-          ? 'unlocked'
-          : linkedGoals.length
-            ? 'in-progress'
-            : 'draft'
-      return { reward: r, progress, status, linkedGoals }
+      const summary = rewardProgressSummary(r, linkedGoals, logs)
+      const status = rewardStatus(r, linkedGoals, logs, summary)
+      return {
+        reward: r,
+        progress: summary.ratio,
+        status,
+        linkedGoals,
+        summary,
+      }
     })
   }, [rewards, goals, logs])
 
@@ -49,7 +49,7 @@ export function RewardVault() {
     return (TIER_RANK[b.reward.tier] || 0) - (TIER_RANK[a.reward.tier] || 0)
   })
 
-  const handleRewardAction = ({ reward, status, linkedGoals }) => {
+  const handleRewardAction = ({ reward, status, linkedGoals, summary }) => {
     if (status === 'unlocked') {
       claimReward(reward.id)
       pushToast({ message: `${reward.name} claimed. Enjoy it.`, variant: 'success' })
@@ -57,7 +57,9 @@ export function RewardVault() {
     }
 
     const nextGoal =
-      linkedGoals.find((g) => !g.archivedAt && !g.completedAt) || linkedGoals[0]
+      summary?.focusGoal ||
+      linkedGoals.find((g) => !g.archivedAt && !g.completedAt) ||
+      linkedGoals[0]
 
     if (nextGoal) {
       navigate(`/goal/${nextGoal.id}`)
@@ -93,17 +95,19 @@ export function RewardVault() {
         <section className="vault__section">
           <div className="t-label muted vault__label">Active</div>
           <div className="vault__row">
-            {active.map(({ reward, progress }) => (
+            {active.map(({ reward, progress, status, linkedGoals, summary }) => (
               <RewardCard
                 key={reward.id}
                 reward={reward}
                 progress={progress}
+                status={status}
                 onClick={() =>
                   handleRewardAction({
                     reward,
                     progress,
-                    status: reward.unlockedAt ? 'unlocked' : 'in-progress',
-                    linkedGoals: goalsLinkedTo(reward.id, goals),
+                    status,
+                    linkedGoals,
+                    summary,
                   })
                 }
               />
@@ -115,7 +119,7 @@ export function RewardVault() {
       <section className="vault__section">
         <div className="t-label muted vault__label">All rewards</div>
         <ul className="vault__list">
-          {allSorted.map(({ reward, progress, status, linkedGoals }, i) => {
+          {allSorted.map(({ reward, progress, status, linkedGoals, summary }, i) => {
             const mode = getUnlockMode(reward.unlockMode)
             const isShared = linkedGoals.length > 1
             const earned = reward.unlockCount || 0
@@ -130,7 +134,12 @@ export function RewardVault() {
                   className="vault-row"
                   type="button"
                   onClick={() =>
-                    handleRewardAction({ reward, status, linkedGoals })
+                    handleRewardAction({
+                      reward,
+                      status,
+                      linkedGoals,
+                      summary,
+                    })
                   }
                   aria-label={rewardActionLabel({ reward, status, linkedGoals })}
                 >
@@ -144,7 +153,7 @@ export function RewardVault() {
                         {status === 'in-progress' && (
                           <>
                             <LockSimple size={12} weight="fill" />{' '}
-                            {Math.round(progress * 100)}%
+                            {rewardProgressText({ reward, progress, summary })}
                           </>
                         )}
                         {status === 'unlocked' && (
@@ -191,6 +200,21 @@ function rewardActionLabel({ reward, status, linkedGoals }) {
   if (status === 'unlocked') return `Claim ${reward.name}`
   if (linkedGoals.length > 0) return `Open goal for ${reward.name}`
   return `Create a goal for ${reward.name}`
+}
+
+function rewardProgressText({ reward, progress, summary }) {
+  const pct = `${Math.round(progress * 100)}%`
+  const mode = reward.unlockMode || 'each'
+  if (mode === 'all' && summary.total > 1) {
+    return `${summary.completed}/${summary.total} goals · ${pct}`
+  }
+  if (mode === 'any' && summary.total > 1) {
+    return `Best goal · ${pct}`
+  }
+  if (mode === 'each' && (reward.unlockCount || 0) > 0) {
+    return `Next earn · ${pct}`
+  }
+  return pct
 }
 
 function Heading({ title, subtitle }) {

@@ -10,7 +10,9 @@ import {
   afterLogCopy,
   evaluateUnlock,
   goalProgress,
+  isGoalDueToday,
   loggedToday,
+  nextScheduledLabel,
   nowISO,
   todayKey,
   uid,
@@ -379,6 +381,16 @@ export function StoreProvider({ children }) {
       logProgress: (goal) => {
         const snap = stateRef.current
         const isCount = goal.type === 'count'
+        if (goal.type === 'habit' && !isGoalDueToday(goal)) {
+          dispatch({
+            type: 'push_toast',
+            toast: {
+              message: `Not scheduled today. Next up: ${nextScheduledLabel(goal)}.`,
+              variant: 'info',
+            },
+          })
+          return false
+        }
         if (!isCount && loggedToday(goal, snap.logs)) {
           dispatch({
             type: 'push_toast',

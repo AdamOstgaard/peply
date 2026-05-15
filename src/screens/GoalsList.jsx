@@ -6,6 +6,7 @@ import { GoalCard } from '../components/GoalCard.jsx'
 import { EmptyState, SeedIllustration } from '../components/EmptyState.jsx'
 import { Button } from '../components/Button.jsx'
 import { useStore } from '../lib/store.jsx'
+import { isGoalDueToday } from '../lib/domain.js'
 import './GoalsList.css'
 
 const TABS = [
@@ -93,7 +94,12 @@ export function GoalsList() {
               }}
               transition={{ duration: 0.3, ease: [0, 0, 0.2, 1] }}
             >
-              <GoalCard goal={g} logs={logs} onLog={handleLog} />
+              <GoalCard
+                goal={g}
+                logs={logs}
+                onLog={handleLog}
+                due={isGoalDueToday(g)}
+              />
             </motion.li>
           ))}
         </motion.ul>

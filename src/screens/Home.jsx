@@ -9,9 +9,13 @@ import { Button } from '../components/Button.jsx'
 import { useStore } from '../lib/store.jsx'
 import {
   getGoalType,
-  goalProgress,
+  goalsLinkedTo,
+  isGoalDueToday,
   loggedToday,
+  nextScheduledLabel,
   recoveryCopy,
+  rewardProgressSummary,
+  rewardStatus,
   timeOfDayGreeting,
 } from '../lib/domain.js'
 import './Home.css'
@@ -29,10 +33,26 @@ export function Home() {
     [goals],
   )
 
+  const dueGoals = useMemo(
+    () => activeGoals.filter((g) => isGoalDueToday(g)),
+    [activeGoals],
+  )
+
+  const upcomingGoals = useMemo(
+    () => activeGoals.filter((g) => !isGoalDueToday(g)),
+    [activeGoals],
+  )
+
   const activeRewards = useMemo(() => {
-    const linked = new Set(activeGoals.map((g) => g.rewardId).filter(Boolean))
-    return rewards.filter((r) => linked.has(r.id) && !r.claimedAt)
-  }, [activeGoals, rewards])
+    return rewards
+      .map((reward) => {
+        const linkedGoals = goalsLinkedTo(reward.id, goals)
+        const summary = rewardProgressSummary(reward, linkedGoals, logs)
+        const status = rewardStatus(reward, linkedGoals, logs, summary)
+        return { reward, progress: summary.ratio, status }
+      })
+      .filter((r) => r.status === 'in-progress' || r.status === 'unlocked')
+  }, [goals, logs, rewards])
 
   const completedRecent = useMemo(() => {
     return goals
@@ -43,8 +63,7 @@ export function Home() {
 
   const greeting = useMemo(() => timeOfDayGreeting(), [])
   const allLoggedToday =
-    activeGoals.length > 0 &&
-    activeGoals.every((g) => loggedToday(g, logs))
+    dueGoals.length > 0 && dueGoals.every((g) => loggedToday(g, logs))
 
   const recentActivity = logs.length > 0
   const lastActiveDate = logs[0]?.date
@@ -73,16 +92,13 @@ export function Home() {
       {activeRewards.length > 0 && (
         <section className="home__rewards" aria-label="Active rewards">
           <div className="home__rewards-scroll">
-            {activeRewards.map((reward) => {
-              const linkedGoal = activeGoals.find((g) => g.rewardId === reward.id)
-              const progress = linkedGoal
-                ? goalProgress(linkedGoal, logs).ratio
-                : 0
+            {activeRewards.map(({ reward, progress, status }) => {
               return (
                 <RewardTeaser
                   key={reward.id}
                   reward={reward}
                   progress={progress}
+                  status={status}
                   onClick={() => navigate('/rewards')}
                 />
               )
@@ -92,10 +108,10 @@ export function Home() {
       )}
 
       <section className="home__section">
-        {activeGoals.length > 0 && (
+        {dueGoals.length > 0 && (
           <div className="home__section-head">
             <h2 className="t-title">Today</h2>
-            <span className="chip">{activeGoals.length}</span>
+            <span className="chip">{dueGoals.length}</span>
           </div>
         )}
 
@@ -110,6 +126,19 @@ export function Home() {
               </Button>
             }
           />
+        ) : dueGoals.length === 0 ? (
+          <div className="rest-day-card">
+            <div className="rest-day-card__emoji" aria-hidden>
+              ☕
+            </div>
+            <div>
+              <div className="t-title">Nothing due today</div>
+              <p className="t-body-sm muted">
+                Your scheduled habits are resting. Pick up the next one{' '}
+                {nextDueCopy(upcomingGoals[0])}.
+              </p>
+            </div>
+          </div>
         ) : (
           <motion.ul
             className="home__list"
@@ -122,7 +151,7 @@ export function Home() {
               },
             }}
           >
-            {activeGoals.slice(0, 6).map((goal) => (
+            {dueGoals.slice(0, 6).map((goal) => (
               <motion.li
                 key={goal.id}
                 variants={{
@@ -141,6 +170,27 @@ export function Home() {
       {activeGoals.length > 0 && (
         <section className="home__section">
           <MomentumMeter logs={logs} />
+        </section>
+      )}
+
+      {upcomingGoals.length > 0 && (
+        <section className="home__section">
+          <div className="home__section-head">
+            <h2 className="t-title">Upcoming</h2>
+            <span className="chip">{upcomingGoals.length}</span>
+          </div>
+          <ul className="home__list">
+            {upcomingGoals.slice(0, 3).map((goal) => (
+              <li key={goal.id}>
+                <GoalCard
+                  goal={goal}
+                  logs={logs}
+                  onLog={handleLog}
+                  due={false}
+                />
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -171,6 +221,13 @@ function daysSince(dateStr) {
   return Math.floor((now - then) / (1000 * 60 * 60 * 24))
 }
 
+function nextDueCopy(goal) {
+  const label = nextScheduledLabel(goal)
+  if (label === 'Today') return 'today'
+  if (label === 'Tomorrow') return 'tomorrow'
+  return `on ${label}`
+}
+
 function Header({ greeting, name, celebrate, recovery }) {
   return (
     <div className={`home-header ${celebrate ? 'home-header--celebrate' : ''}`}>
@@ -192,7 +249,7 @@ function Header({ greeting, name, celebrate, recovery }) {
   )
 }
 
-function RewardTeaser({ reward, progress, onClick }) {
+function RewardTeaser({ reward, progress, status, onClick }) {
   const pct = Math.round(progress * 100)
   return (
     <button
@@ -205,7 +262,9 @@ function RewardTeaser({ reward, progress, onClick }) {
         {reward.emoji || '🎁'}
       </div>
       <div className="reward-teaser__body">
-        <div className="t-body-sm muted">You're {pct}% there</div>
+        <div className="t-body-sm muted">
+          {status === 'unlocked' ? 'Ready to claim' : `You're ${pct}% there`}
+        </div>
         <div className="t-body-lg reward-teaser__name">{reward.name}</div>
         <div className="reward-teaser__bar">
           <motion.span

@@ -10,7 +10,10 @@ import { useStore } from '../lib/store.jsx'
 import {
   getGoalType,
   goalProgress,
+  isGoalDueToday,
   loggedToday,
+  nextScheduledLabel,
+  scheduleLabel,
   todayKey,
 } from '../lib/domain.js'
 import './GoalDetail.css'
@@ -47,6 +50,7 @@ export function GoalDetail() {
   const progress = goalProgress(goal, logs)
   const isLoggedToday = loggedToday(goal, logs)
   const isComplete = progress.ratio >= 1
+  const isOffSchedule = type.id === 'habit' && !isGoalDueToday(goal)
   const goalLogs = progress.goalLogs.slice(0, 10)
 
   const cta = type.cta
@@ -60,6 +64,7 @@ export function GoalDetail() {
           : 'primary'
 
   const handleLog = () => {
+    if (isOffSchedule) return
     if (type.id !== 'count' && isLoggedToday) return
     logProgress(goal)
   }
@@ -110,12 +115,21 @@ export function GoalDetail() {
             variant={ctaVariant}
             block
             onClick={handleLog}
-            disabled={type.id !== 'count' && isLoggedToday}
+            disabled={isOffSchedule || (type.id !== 'count' && isLoggedToday)}
           >
-            {isLoggedToday && type.id !== 'count' ? 'Done for today ✓' : cta}
+            {isOffSchedule
+              ? `Next session ${nextScheduledLabel(goal)}`
+              : isLoggedToday && type.id !== 'count'
+                ? 'Done for today ✓'
+                : cta}
           </Button>
         )}
-        {isLoggedToday && type.id !== 'count' && (
+        {isOffSchedule && !isComplete && (
+          <p className="goal-detail__schedule-note t-body-sm muted">
+            Scheduled {scheduleLabel(goal.schedule)}.
+          </p>
+        )}
+        {isLoggedToday && type.id !== 'count' && !isOffSchedule && (
           <button type="button" className="undo-btn" onClick={handleUndo}>
             <ArrowUUpLeft size={14} weight="bold" /> Undo today's log
           </button>
@@ -129,7 +143,8 @@ export function GoalDetail() {
         </div>
         <div className="t-body-sm muted">
           {type.id === 'count' && (goal.unit || 'completed')}
-          {type.id === 'habit' && 'sessions logged'}
+          {type.id === 'habit' &&
+            `sessions logged · ${scheduleLabel(goal.schedule)}`}
           {type.id === 'avoid' && 'on-track days'}
           {type.id === 'milestone' &&
             (isComplete ? 'milestone achieved' : 'one big win to go')}

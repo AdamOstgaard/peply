@@ -99,6 +99,56 @@ export function loggedToday(goal, logs) {
   return logs.some((l) => l.goalId === goal.id && l.date === today)
 }
 
+export const WEEKDAYS = [
+  { id: 'sun', short: 'Sun', narrow: 'S' },
+  { id: 'mon', short: 'Mon', narrow: 'M' },
+  { id: 'tue', short: 'Tue', narrow: 'T' },
+  { id: 'wed', short: 'Wed', narrow: 'W' },
+  { id: 'thu', short: 'Thu', narrow: 'T' },
+  { id: 'fri', short: 'Fri', narrow: 'F' },
+  { id: 'sat', short: 'Sat', narrow: 'S' },
+]
+
+export function weekdayId(d = new Date()) {
+  return WEEKDAYS[d.getDay()].id
+}
+
+export function isGoalDueOn(goal, d = new Date()) {
+  if (goal.type !== 'habit') return true
+  const schedule = goal.schedule || []
+  if (schedule.length === 0) return true
+  return schedule.includes(weekdayId(d))
+}
+
+export function isGoalDueToday(goal) {
+  return isGoalDueOn(goal)
+}
+
+export function scheduleLabel(schedule = []) {
+  if (!schedule.length || schedule.length === 7) return 'Every day'
+  const ordered = WEEKDAYS.filter((d) => schedule.includes(d.id)).map(
+    (d) => d.short,
+  )
+  return ordered.join(', ')
+}
+
+export function nextScheduledLabel(goal, from = new Date()) {
+  if (goal.type !== 'habit') return 'Today'
+  const schedule = goal.schedule || []
+  if (schedule.length === 0 || schedule.length === 7) return 'Today'
+
+  for (let offset = 0; offset < 7; offset++) {
+    const d = new Date(from)
+    d.setDate(from.getDate() + offset)
+    if (schedule.includes(weekdayId(d))) {
+      if (offset === 0) return 'Today'
+      if (offset === 1) return 'Tomorrow'
+      return WEEKDAYS[d.getDay()].short
+    }
+  }
+  return scheduleLabel(schedule)
+}
+
 export const UNLOCK_MODES = [
   {
     id: 'each',
@@ -128,6 +178,88 @@ export function getUnlockMode(id) {
 export function goalsLinkedTo(rewardId, goals) {
   if (!rewardId) return []
   return goals.filter((g) => g.rewardId === rewardId && !g.archivedAt)
+}
+
+export function rewardProgressSummary(reward, linkedGoals, logs) {
+  const mode = reward?.unlockMode || 'each'
+  const items = linkedGoals.map((goal) => {
+    const progress = goalProgress(goal, logs)
+    const complete = Boolean(goal.completedAt) || progress.ratio >= 1
+    return { goal, progress, complete }
+  })
+
+  const total = items.length
+  const completed = items.filter((i) => i.complete).length
+  const incomplete = items.filter((i) => !i.complete)
+  const best = [...items].sort(
+    (a, b) => b.progress.ratio - a.progress.ratio,
+  )[0]
+  const bestIncomplete = [...incomplete].sort(
+    (a, b) => b.progress.ratio - a.progress.ratio,
+  )[0]
+
+  if (!total) {
+    return {
+      mode,
+      ratio: 0,
+      total,
+      completed,
+      remaining: 0,
+      focusGoal: null,
+      items,
+    }
+  }
+
+  if (mode === 'all') {
+    const ratio =
+      (reward.unlockCount || 0) > 0
+        ? 1
+        : items.reduce((sum, item) => sum + item.progress.ratio, 0) / total
+    return {
+      mode,
+      ratio,
+      total,
+      completed,
+      remaining: Math.max(0, total - completed),
+      focusGoal: bestIncomplete?.goal || best?.goal || null,
+      items,
+    }
+  }
+
+  if (mode === 'any') {
+    return {
+      mode,
+      ratio: (reward.unlockCount || 0) > 0 ? 1 : best?.progress.ratio || 0,
+      total,
+      completed,
+      remaining: completed > 0 ? 0 : 1,
+      focusGoal: best?.goal || null,
+      items,
+    }
+  }
+
+  const focus =
+    reward.unlockedAt && !reward.claimedAt ? best : bestIncomplete || best
+  return {
+    mode,
+    ratio: focus?.progress.ratio || 0,
+    total,
+    completed,
+    remaining: incomplete.length,
+    focusGoal: focus?.goal || null,
+    items,
+  }
+}
+
+export function rewardStatus(reward, linkedGoals, logs, summary = null) {
+  const progress = summary || rewardProgressSummary(reward, linkedGoals, logs)
+  if (!progress.total) return 'draft'
+  if (reward.unlockedAt && !reward.claimedAt) return 'unlocked'
+  if ((reward.unlockMode || 'each') === 'each' && progress.remaining > 0) {
+    return 'in-progress'
+  }
+  if (reward.claimedAt) return 'claimed'
+  return 'in-progress'
 }
 
 // Decide what should happen to a reward when the given goal just hit 100%.

@@ -102,6 +102,11 @@
   background: none;
 }
 
+.goal-detail__schedule-note {
+  margin: 0;
+  text-align: center;
+}
+
 .goal-detail__stats {
   padding: var(--space-6) var(--space-5) var(--space-3);
   display: flex;

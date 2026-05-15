@@ -1,27 +1,33 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { Check, Plus } from '@phosphor-icons/react'
+import { Check, Clock, Plus } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
-import { getGoalType, goalProgress, loggedToday } from '../lib/domain.js'
+import {
+  getGoalType,
+  goalProgress,
+  loggedToday,
+  nextScheduledLabel,
+} from '../lib/domain.js'
 import { ProgressRing } from './ProgressRing.jsx'
 import './GoalCard.css'
 
-export function GoalCard({ goal, logs, onLog }) {
+export function GoalCard({ goal, logs, onLog, due = true }) {
   const navigate = useNavigate()
   const type = getGoalType(goal.type)
   const progress = goalProgress(goal, logs)
   const isLoggedToday = loggedToday(goal, logs)
   const isDailyDone = goal.type !== 'count' && isLoggedToday
   const isComplete = progress.ratio >= 1
+  const isOffSchedule = goal.type === 'habit' && !due && !isComplete
   const reduce = useReducedMotion()
 
   const handleCardTap = () => navigate(`/goal/${goal.id}`)
   const handleLog = (e) => {
     e.stopPropagation()
-    if (isComplete || isDailyDone) return
+    if (isComplete || isDailyDone || isOffSchedule) return
     onLog?.(goal)
   }
 
-  const progressText = formatProgressText(goal, progress)
+  const progressText = formatProgressText(goal, progress, isOffSchedule)
 
   const handleCardKey = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -40,7 +46,7 @@ export function GoalCard({ goal, logs, onLog }) {
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className={`goal-card ${isDailyDone || isComplete ? 'goal-card--logged' : ''} ${
         isComplete ? 'goal-card--complete' : ''
-      }`}
+      } ${isOffSchedule ? 'goal-card--paused' : ''}`}
       style={{ '--strip': type.color }}
       aria-label={`${goal.name}, ${progressText}`}
     >
@@ -69,22 +75,30 @@ export function GoalCard({ goal, logs, onLog }) {
         type="button"
         className={`goal-card__log ${
           isLoggedToday ? 'goal-card__log--done' : ''
-        }`}
+        } ${isOffSchedule ? 'goal-card__log--paused' : ''}`}
         whileTap={{ scale: reduce ? 1 : 0.85 }}
         transition={{ type: 'spring', stiffness: 700, damping: 22 }}
         onClick={handleLog}
-        disabled={isComplete || isDailyDone}
+        disabled={isComplete || isDailyDone || isOffSchedule}
         aria-label={
           isComplete
             ? `${goal.name} complete`
             : isDailyDone
               ? `${goal.name} logged today`
+              : isOffSchedule
+                ? `${goal.name} is not scheduled today`
               : `Log ${goal.name}`
         }
-        style={!isDailyDone && !isComplete ? { background: type.gradient } : undefined}
+        style={
+          !isDailyDone && !isComplete && !isOffSchedule
+            ? { background: type.gradient }
+            : undefined
+        }
       >
         {isDailyDone || isComplete ? (
           <Check size={22} weight="bold" />
+        ) : isOffSchedule ? (
+          <Clock size={22} weight="bold" />
         ) : (
           <Plus size={22} weight="bold" />
         )}
@@ -93,11 +107,16 @@ export function GoalCard({ goal, logs, onLog }) {
   )
 }
 
-function formatProgressText(goal, progress) {
+function formatProgressText(goal, progress, isOffSchedule) {
   if (goal.type === 'milestone') {
     return progress.ratio >= 1 ? 'Complete' : 'Tap when you make it happen'
   }
   if (goal.type === 'habit') {
+    if (isOffSchedule) {
+      return `${progress.current} of ${progress.target} sessions · next: ${nextScheduledLabel(
+        goal,
+      )}`
+    }
     return `${progress.current} of ${progress.target} sessions`
   }
   if (goal.type === 'avoid') {
