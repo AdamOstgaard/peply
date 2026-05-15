@@ -274,10 +274,15 @@ export function Home() {
           </div>
           <div className="home__wins">
             {completedRecent.map((g) => (
-              <div className="win-chip" key={g.id}>
+              <Link
+                to={`/goal/${g.id}`}
+                className="win-chip"
+                key={g.id}
+                aria-label={`Open completed goal ${g.name}`}
+              >
                 <span>{g.emoji || getGoalType(g.type).emoji}</span>
                 <span className="t-body-sm">{g.name} ✓</span>
-              </div>
+              </Link>
             ))}
           </div>
         </section>

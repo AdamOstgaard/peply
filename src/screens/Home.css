@@ -117,7 +117,7 @@
 }
 
 .home__rewards {
-  padding: 0 0 var(--space-2) var(--space-5);
+  padding: 0 0 var(--space-2);
   position: relative;
   z-index: 2;
 }
@@ -127,7 +127,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-3);
-  padding-right: var(--space-5);
+  padding: 0 var(--space-5);
   margin-bottom: var(--space-2);
 }
 
@@ -149,6 +149,7 @@
 .home__rewards-window {
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .home__rewards-window::after {
@@ -167,7 +168,8 @@
   gap: var(--space-3);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 0 var(--space-5) var(--space-2) 0;
+  scroll-padding-inline: var(--space-5);
+  padding: 0 var(--space-5) var(--space-2);
   scrollbar-width: none;
 }
 .home__rewards-scroll::-webkit-scrollbar {
