@@ -74,7 +74,9 @@ export function GoalCard({ goal, logs, onLog, due = true }) {
       <motion.button
         type="button"
         className={`goal-card__log ${
-          isLoggedToday ? 'goal-card__log--done' : ''
+          isDailyDone ? 'goal-card__log--done' : ''
+        } ${
+          isComplete ? 'goal-card__log--complete' : ''
         } ${isOffSchedule ? 'goal-card__log--paused' : ''}`}
         whileTap={{ scale: reduce ? 1 : 0.85 }}
         transition={{ type: 'spring', stiffness: 700, damping: 22 }}

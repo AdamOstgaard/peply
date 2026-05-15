@@ -3,6 +3,7 @@ import {
   lastNDays,
   momentumLabel,
   momentumScore,
+  momentumStats,
   todayKey,
 } from '../lib/domain.js'
 import './MomentumMeter.css'
@@ -11,8 +12,8 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
 export function MomentumMeter({ logs }) {
   const reduce = useReducedMotion()
-  const score = momentumScore(logs)
-  const label = momentumLabel(score)
+  const stats = momentumStats(logs)
+  const label = momentumLabel(stats)
   const days = lastNDays(7)
   const today = todayKey()
 
@@ -32,12 +33,24 @@ export function MomentumMeter({ logs }) {
     <section className="momentum" aria-label={`Momentum: ${label.label}`}>
       <header className="momentum__head">
         <div>
-          <div className="t-label muted">Your momentum this week</div>
+          <div className="t-label muted">Momentum</div>
           <div className="momentum__label">
             <span aria-hidden>{label.emoji}</span> {label.label}
           </div>
+          <div className="momentum__meaning t-body-sm muted">
+            {stats.activeCount} of 7 days checked in
+          </div>
         </div>
-        <div className="t-body-sm muted momentum__copy">{label.copy}</div>
+        <div className="momentum__side">
+          <span
+            className={`momentum__today ${
+              stats.todayActive ? 'momentum__today--active' : ''
+            }`}
+          >
+            {stats.todayActive ? 'Today done' : 'Today open'}
+          </span>
+          <div className="t-body-sm muted momentum__copy">{label.copy}</div>
+        </div>
       </header>
       <div className="momentum__row" role="list">
         {dayState.map((s, i) => (
@@ -63,13 +76,19 @@ export function MomentumMeter({ logs }) {
 }
 
 export function MomentumBar({ logs }) {
+  const stats = momentumStats(logs)
   const score = momentumScore(logs)
-  const label = momentumLabel(score)
+  const label = momentumLabel(stats)
   return (
     <div className="momentum-bar">
       <div className="momentum-bar__head">
-        <span className="t-label muted">Momentum</span>
-        <span className="t-body-sm">
+        <span>
+          <span className="t-label muted">Goal rhythm</span>
+          <span className="momentum-bar__meaning t-caption muted">
+            {stats.activeCount}/7 days
+          </span>
+        </span>
+        <span className="t-body-sm momentum-bar__status">
           <span aria-hidden>{label.emoji}</span> {label.label}
         </span>
       </div>

@@ -149,15 +149,10 @@ export function Home() {
               <div className="t-label muted">Rewards in motion</div>
               <div className="t-body-sm muted">
                 {activeRewards.length === 1
-                  ? 'One reward to keep an eye on'
-                  : `${activeRewards.length} rewards · swipe to see more`}
+                  ? '1 active reward'
+                  : `${activeRewards.length} active rewards`}
               </div>
             </div>
-            {activeRewards.length > 1 && (
-              <span className="home__rewards-swipe">
-                Swipe <ArrowRight size={13} weight="bold" />
-              </span>
-            )}
           </div>
           <div className="home__rewards-window">
             <div className="home__rewards-scroll">

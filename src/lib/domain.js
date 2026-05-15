@@ -312,36 +312,74 @@ export function lastNDays(n) {
 }
 
 export function momentumScore(logs) {
-  const days = lastNDays(7)
-  const active = days.filter((d) => logs.some((l) => l.date === d)).length
-  return Math.round((active / 7) * 100)
+  return momentumStats(logs).score
 }
 
-export function momentumLabel(score) {
+export function momentumStats(logs) {
+  const days = lastNDays(7)
+  const activeDays = days.filter((d) => logs.some((l) => l.date === d))
+  const today = todayKey()
+  const todayActive = activeDays.includes(today)
+  const streak = [...days]
+    .reverse()
+    .reduce(
+      (acc, day) => {
+        if (acc.done) return acc
+        if (logs.some((l) => l.date === day)) {
+          return { count: acc.count + 1, done: false }
+        }
+        return { count: acc.count, done: true }
+      },
+      { count: 0, done: false },
+    ).count
+
+  return {
+    days,
+    activeDays,
+    activeCount: activeDays.length,
+    todayActive,
+    streak,
+    score: Math.round((activeDays.length / 7) * 100),
+  }
+}
+
+export function momentumLabel(scoreOrStats) {
+  const stats =
+    typeof scoreOrStats === 'number' ? null : scoreOrStats
+  const score =
+    typeof scoreOrStats === 'number' ? scoreOrStats : scoreOrStats.score
+  const streakCopy =
+    stats?.streak >= 2
+      ? `${stats.streak}-day run. Keep it warm.`
+      : null
   if (score >= 90)
-    return { label: 'In flow', emoji: '⚡', copy: "You're in the zone." }
+    return {
+      label: 'In flow',
+      emoji: '⚡',
+      copy: streakCopy || 'Your rhythm is carrying you.',
+    }
   if (score >= 70)
     return {
       label: 'Strong',
       emoji: '💪',
-      copy: 'This is becoming part of you.',
+      copy: streakCopy || 'You have been showing up often.',
     }
   if (score >= 40)
     return {
       label: 'Building',
       emoji: '🔥',
-      copy: "You're building consistency.",
+      copy: streakCopy || 'A few check-ins can shift the week.',
     }
   if (score >= 16)
     return {
       label: 'Warming up',
       emoji: '✨',
-      copy: "You're finding your rhythm.",
+      copy: 'One return is still momentum.',
     }
   return {
     label: 'Getting started',
     emoji: '🌱',
-    copy: 'Every step counts from here.',
+    copy: 'Your next check-in starts the rhythm.',
   }
 }
 
