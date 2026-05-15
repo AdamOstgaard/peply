@@ -58,6 +58,49 @@
   margin: 0;
 }
 
+.home-header__action {
+  margin-top: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: min(100%, 330px);
+  min-height: 58px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: var(--color-text-inverse);
+  text-align: left;
+  backdrop-filter: blur(10px);
+}
+
+.home-header__action > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.home-header__action-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.home-header__action-label {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--color-text-inverse);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .home-header__avatar {
   position: absolute;
   top: calc(env(safe-area-inset-top) + var(--space-5));
@@ -74,9 +117,49 @@
 }
 
 .home__rewards {
-  padding: 0 var(--space-5) var(--space-2);
+  padding: 0 0 var(--space-2) var(--space-5);
   position: relative;
   z-index: 2;
+}
+
+.home__rewards-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-right: var(--space-5);
+  margin-bottom: var(--space-2);
+}
+
+.home__rewards-swipe {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.home__rewards-window {
+  position: relative;
+  overflow: hidden;
+}
+
+.home__rewards-window::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: var(--space-2);
+  width: 56px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(253, 252, 251, 0), var(--color-bg));
 }
 
 .home__rewards-scroll {
@@ -84,7 +167,7 @@
   gap: var(--space-3);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-bottom: var(--space-2);
+  padding: 0 var(--space-5) var(--space-2) 0;
   scrollbar-width: none;
 }
 .home__rewards-scroll::-webkit-scrollbar {
@@ -93,8 +176,8 @@
 
 .reward-teaser {
   flex-shrink: 0;
-  width: calc(100% - 16px);
-  max-width: 360px;
+  width: min(320px, 82%);
+  min-width: 270px;
   scroll-snap-align: start;
   display: flex;
   align-items: center;

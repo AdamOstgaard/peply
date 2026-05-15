@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Plus } from '@phosphor-icons/react'
+import { ArrowRight, Plus } from '@phosphor-icons/react'
 import { GoalCard } from '../components/GoalCard.jsx'
 import { MomentumMeter } from '../components/MomentumMeter.jsx'
 import { EmptyState, SeedIllustration } from '../components/EmptyState.jsx'
@@ -49,9 +49,13 @@ export function Home() {
         const linkedGoals = goalsLinkedTo(reward.id, goals)
         const summary = rewardProgressSummary(reward, linkedGoals, logs)
         const status = rewardStatus(reward, linkedGoals, logs, summary)
-        return { reward, progress: summary.ratio, status }
+        return { reward, progress: summary.ratio, status, summary }
       })
       .filter((r) => r.status === 'in-progress' || r.status === 'unlocked')
+      .sort((a, b) => {
+        if (a.status !== b.status) return a.status === 'unlocked' ? -1 : 1
+        return b.progress - a.progress
+      })
   }, [goals, logs, rewards])
 
   const completedRecent = useMemo(() => {
@@ -78,6 +82,53 @@ export function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const recoveryLine = useMemo(() => recoveryCopy(), [lastActiveDate])
 
+  const heroAction = useMemo(() => {
+    const unloggedGoal = dueGoals.find((g) => !loggedToday(g, logs))
+    const readyReward = activeRewards.find((r) => r.status === 'unlocked')
+    const nearestReward = activeRewards[0]
+
+    if (readyReward) {
+      return {
+        eyebrow: 'Reward ready',
+        label: `Claim ${readyReward.reward.name}`,
+        to: `/rewards/${readyReward.reward.id}`,
+      }
+    }
+    if (unloggedGoal) {
+      return {
+        eyebrow: 'Next up',
+        label: `${getGoalType(unloggedGoal.type).cta}: ${unloggedGoal.name}`,
+        to: `/goal/${unloggedGoal.id}`,
+      }
+    }
+    if (nearestReward) {
+      return {
+        eyebrow: 'Reward in reach',
+        label: `Check ${nearestReward.reward.name}`,
+        to: `/rewards/${nearestReward.reward.id}`,
+      }
+    }
+    if (upcomingGoals[0]) {
+      return {
+        eyebrow: 'Coming up',
+        label: `${upcomingGoals[0].name} · ${nextScheduledLabel(upcomingGoals[0])}`,
+        to: `/goal/${upcomingGoals[0].id}`,
+      }
+    }
+    if (completedRecent[0]) {
+      return {
+        eyebrow: 'Recent win',
+        label: 'Open your brag board',
+        to: '/achievements',
+      }
+    }
+    return {
+      eyebrow: 'Start here',
+      label: 'Create your first goal',
+      to: '/goal/new',
+    }
+  }, [activeRewards, completedRecent, dueGoals, logs, upcomingGoals])
+
   const handleLog = (goal) => logProgress(goal)
 
   return (
@@ -87,22 +138,41 @@ export function Home() {
         name={user.name}
         celebrate={allLoggedToday}
         recovery={showRecovery ? recoveryLine : null}
+        action={heroAction}
+        onAction={() => navigate(heroAction.to)}
       />
 
       {activeRewards.length > 0 && (
         <section className="home__rewards" aria-label="Active rewards">
-          <div className="home__rewards-scroll">
-            {activeRewards.map(({ reward, progress, status }) => {
-              return (
-                <RewardTeaser
-                  key={reward.id}
-                  reward={reward}
-                  progress={progress}
-                  status={status}
-                  onClick={() => navigate('/rewards')}
-                />
-              )
-            })}
+          <div className="home__rewards-head">
+            <div>
+              <div className="t-label muted">Rewards in motion</div>
+              <div className="t-body-sm muted">
+                {activeRewards.length === 1
+                  ? 'One reward to keep an eye on'
+                  : `${activeRewards.length} rewards · swipe to see more`}
+              </div>
+            </div>
+            {activeRewards.length > 1 && (
+              <span className="home__rewards-swipe">
+                Swipe <ArrowRight size={13} weight="bold" />
+              </span>
+            )}
+          </div>
+          <div className="home__rewards-window">
+            <div className="home__rewards-scroll">
+              {activeRewards.map(({ reward, progress, status }) => {
+                return (
+                  <RewardTeaser
+                    key={reward.id}
+                    reward={reward}
+                    progress={progress}
+                    status={status}
+                    onClick={() => navigate(`/rewards/${reward.id}`)}
+                  />
+                )
+              })}
+            </div>
           </div>
         </section>
       )}
@@ -233,7 +303,7 @@ function nextDueCopy(goal) {
   return `on ${label}`
 }
 
-function Header({ greeting, name, celebrate, recovery }) {
+function Header({ greeting, name, celebrate, recovery, action, onAction }) {
   return (
     <div className={`home-header ${celebrate ? 'home-header--celebrate' : ''}`}>
       <div className="home-header__bg" aria-hidden />
@@ -246,6 +316,21 @@ function Header({ greeting, name, celebrate, recovery }) {
           {celebrate ? `Nice work, ${name}.` : `Hi ${name}.`}
         </h1>
         <p className="t-body home-header__tag">{recovery || greeting}</p>
+        {action && (
+          <button
+            type="button"
+            className="home-header__action"
+            onClick={onAction}
+          >
+            <span>
+              <span className="home-header__action-eyebrow">
+                {action.eyebrow}
+              </span>
+              <span className="home-header__action-label">{action.label}</span>
+            </span>
+            <ArrowRight size={18} weight="bold" />
+          </button>
+        )}
       </div>
       <div className="home-header__avatar" aria-hidden>
         {name?.[0]?.toUpperCase() ?? '·'}
